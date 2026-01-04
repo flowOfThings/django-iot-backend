@@ -7,6 +7,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ✅ SECRET_KEY from environment variable
 SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret-key')
 
+ROOT_URLCONF = 'myproject.urls'
+
 # ✅ Debug off in production
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 

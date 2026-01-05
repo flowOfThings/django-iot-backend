@@ -70,8 +70,3 @@ def list_data(request):
 
     serializer = SensorDataSerializer(data, many=True)
     return Response(serializer.data)
-
-    # Fetch all sensor data, newest first
-    data = SensorData.objects.all().order_by('-timestamp')
-    serializer = SensorDataSerializer(data, many=True)
-    return Response(serializer.data)

@@ -1,6 +1,7 @@
 import os
 import dj_database_url
 from pathlib import Path
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,6 +22,11 @@ DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', f'sqlite:///{BASE_DIR}/db.sqlite3')
     )
+}
+
+REST_FRAMEWORK = {
+    # No default authentication — handled manually in views
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
 }
 
 # ✅ Installed apps

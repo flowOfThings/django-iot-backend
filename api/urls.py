@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import ingest
+from . import views
 
 urlpatterns = [
-    path('ingest/', ingest),
+    path('ingest/', views.ingest, name='ingest'),
+    path('data/', views.list_data, name='list_data'),
 ]

@@ -16,7 +16,7 @@ def login(request):
 
     payload = {
         "user": username,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
     }
 
     secret = settings.FRONTEND_SECRET_KEY or "fallbacksecret123"
@@ -61,7 +61,7 @@ def ingest(request):
     SensorData.objects.create(
         device_id=decoded["device_id"],
         value=decoded["value"],
-        timestamp=datetime.datetime.utcnow()
+        timestamp=datetime.datetime.now(datetime.timezone.utc)
     )
 
     return Response({"status": "stored"})

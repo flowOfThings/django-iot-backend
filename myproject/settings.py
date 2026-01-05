@@ -1,22 +1,8 @@
 import os
-import logging
 from pathlib import Path
 from datetime import timedelta
-import django
 from django.core.exceptions import ImproperlyConfigured
 import dj_database_url
-
-# Basic runtime info (temporary; safe: logs presence, not values)
-logging.getLogger(__name__).error(
-    "ENV CHECK: DJANGO_SETTINGS_MODULE=%s, SECRET_KEY present=%s, FRONTEND_SECRET_KEY present=%s, ESP_SECRET_KEY present=%s, DEBUG=%s",
-    os.environ.get("DJANGO_SETTINGS_MODULE"),
-    bool(os.getenv("SECRET_KEY")),
-    bool(os.getenv("FRONTEND_SECRET_KEY")),
-    bool(os.getenv("ESP_SECRET_KEY")),
-    os.getenv("DEBUG"),
-)
-
-print("DJANGO VERSION:", django.get_version())
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -25,7 +11,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ImproperlyConfigured("The SECRET_KEY setting must not be empty.")
 
-# Secrets used by your app (application-level)
+# Application-level secrets
 ESP_SECRET_KEY = os.getenv("ESP_SECRET_KEY")
 FRONTEND_SECRET_KEY = os.getenv("FRONTEND_SECRET_KEY")
 
@@ -33,7 +19,11 @@ FRONTEND_SECRET_KEY = os.getenv("FRONTEND_SECRET_KEY")
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 # Hosts
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",") if os.environ.get("ALLOWED_HOSTS") else ["*"]
+ALLOWED_HOSTS = (
+    os.environ.get("ALLOWED_HOSTS").split(",")
+    if os.environ.get("ALLOWED_HOSTS")
+    else ["django-iot-backend.onrender.com"]
+)
 
 # Database (Render DATABASE_URL or fallback to sqlite)
 DATABASES = {
@@ -55,9 +45,8 @@ INSTALLED_APPS = [
     "corsheaders",
 ]
 
-# Middleware (exception logger first for debugging; remove after fix)
+# Middleware
 MIDDLEWARE = [
-    "api.middleware.ExceptionLoggingMiddleware",  # temporary: logs full tracebacks to stderr
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -69,6 +58,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "myproject.urls"
+WSGI_APPLICATION = "myproject.wsgi.application"
 
 # Templates
 TEMPLATES = [
@@ -86,8 +76,6 @@ TEMPLATES = [
         },
     },
 ]
-
-WSGI_APPLICATION = "myproject.wsgi.application"
 
 # REST framework minimal config
 REST_FRAMEWORK = {
@@ -114,27 +102,27 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Security-related defaults (adjust for production)
+# Security-related defaults
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
 
-# Logging: ensure exception_logger writes to stderr so Render/Gunicorn capture it
+# Logging: console handler for Django logs
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
         "console": {"class": "logging.StreamHandler", "stream": "ext://sys.stderr"},
     },
+    "root": {"handlers": ["console"], "level": "INFO"},
     "loggers": {
-        "exception_logger": {"handlers": ["console"], "level": "ERROR", "propagate": False},
         "django": {"handlers": ["console"], "level": "INFO", "propagate": True},
     },
 }
 
-# Any other app-specific settings (JWT lifetimes, etc.) can go here
-# Example placeholder (unused unless you add JWT logic)
+# JWT / app-specific placeholders
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),

@@ -59,7 +59,12 @@ def login(request):
         "user": username,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     }
-    token = jwt.encode(payload, settings.FRONTEND_SECRET_KEY, algorithm="HS256")
+
+    # Use FRONTEND_SECRET_KEY from settings, fallback if missing
+    secret = settings.FRONTEND_SECRET_KEY or "fallbacksecret123"
+
+    token = jwt.encode(payload, secret, algorithm="HS256")
+
     return Response({"token": token})
 
 # --- Frontend data access ---

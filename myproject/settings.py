@@ -1,9 +1,18 @@
-import os
+import os, logging
 import dj_database_url
 from pathlib import Path
 from datetime import timedelta
-
 import django
+
+logging.getLogger(__name__).error(
+    "ENV CHECK: DJANGO_SETTINGS_MODULE=%s, SECRET_KEY present=%s, FRONTEND_SECRET_KEY present=%s, ESP_SECRET_KEY present=%s, DEBUG=%s",
+    os.environ.get("DJANGO_SETTINGS_MODULE"),
+    bool(os.getenv("SECRET_KEY")),
+    bool(os.getenv("FRONTEND_SECRET_KEY")),
+    bool(os.getenv("ESP_SECRET_KEY")),
+    os.getenv("DEBUG"),
+)
+
 print("DJANGO VERSION:", django.get_version())
 
 BASE_DIR = Path(__file__).resolve().parent.parent

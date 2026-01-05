@@ -5,19 +5,20 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ✅ SECRET_KEY from environment variable
-ESP_SECRET_KEY = os.getenv("ESP_SECRET_KEY")
+# Secrets from environment variables
+ESP_SECRET_KEY = os.getenv("ESP_SECRET_KEY")              # used by devices (Arduino/ESP)
+FRONTEND_SECRET_KEY = os.getenv("FRONTEND_SECRET_KEY")    # used by Django to issue JWTs to frontend users
 
-# ✅ Root URL configuration
+# Root URL configuration
 ROOT_URLCONF = 'myproject.urls'
 
-# ✅ Debug off in production
+# Debug off in production
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# ✅ Allow all hosts during testing, restrict later
+# Allow all hosts during testing, restrict later
 ALLOWED_HOSTS = ['*']  # change to ['django-iot-backend.onrender.com'] after testing
 
-# ✅ Database configuration using Render Postgres or fallback SQLite
+# Database configuration using Render Postgres or fallback SQLite
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', f'sqlite:///{BASE_DIR}/db.sqlite3')
@@ -29,7 +30,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [],
 }
 
-# ✅ Installed apps
+# Installed apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,7 +42,7 @@ INSTALLED_APPS = [
     'api',
 ]
 
-# ✅ Middleware (required for admin, sessions, auth, messages)
+# Middleware (required for admin, sessions, auth, messages)
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',   # required
@@ -52,7 +53,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# ✅ Templates (required for admin and DRF browsable API)
+# Templates (required for admin and DRF browsable API)
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -69,6 +70,6 @@ TEMPLATES = [
     },
 ]
 
-# ✅ Static files (Render needs this)
+# Static files (Render needs this)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

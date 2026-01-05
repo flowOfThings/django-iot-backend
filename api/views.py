@@ -1,4 +1,4 @@
-import jwt
+import jwt, datetime
 from jwt import ExpiredSignatureError, InvalidTokenError
 from django.conf import settings
 from rest_framework.decorators import api_view
@@ -6,9 +6,16 @@ from rest_framework.response import Response
 from .models import SensorData
 from .serializers import SensorDataSerializer
 
-def verify_jwt(token):
+# --- Helpers ---
+def verify_device_jwt(token):
+    """Verify JWT from ESP device using ESP secret."""
     return jwt.decode(token, settings.ESP_SECRET_KEY, algorithms=["HS256"])
 
+def verify_frontend_jwt(token):
+    """Verify JWT from frontend user using frontend secret."""
+    return jwt.decode(token, settings.FRONTEND_SECRET_KEY, algorithms=["HS256"])
+
+# --- Device ingest ---
 @api_view(['POST'])
 def ingest(request):
     token = request.data.get("token")
@@ -16,7 +23,7 @@ def ingest(request):
         return Response({"error": "Missing token"}, status=400)
 
     try:
-        payload = verify_jwt(token)
+        payload = verify_device_jwt(token)
     except ExpiredSignatureError:
         return Response({"error": "Token expired"}, status=401)
     except InvalidTokenError:
@@ -38,15 +45,33 @@ def ingest(request):
 
     return Response({"status": "stored"})
 
+# --- Frontend login ---
+@api_view(['POST'])
+def login(request):
+    username = request.data.get("username")
+    password = request.data.get("password")
+
+    # Demo credentials only
+    if username != "demo" or password != "demo":
+        return Response({"error": "Invalid credentials"}, status=401)
+
+    payload = {
+        "user": username,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    }
+    token = jwt.encode(payload, settings.FRONTEND_SECRET_KEY, algorithm="HS256")
+    return Response({"token": token})
+
+# --- Frontend data access ---
 @api_view(['GET'])
 def list_data(request):
-    token = request.headers.get("Authorization")
-    if not token or not token.startswith("Bearer "):
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return Response({"error": "Missing or invalid Authorization header"}, status=401)
 
-    token = token.split(" ")[1]
+    token = auth_header.split(" ")[1]
     try:
-        verify_jwt(token)
+        verify_frontend_jwt(token)
     except ExpiredSignatureError:
         return Response({"error": "Token expired"}, status=401)
     except InvalidTokenError:
@@ -54,8 +79,6 @@ def list_data(request):
 
     # Optional filter by device_id
     device_id = request.query_params.get("device_id")
-
-    from .models import SensorData
     if device_id:
         data = SensorData.objects.filter(device_id=device_id).order_by('-timestamp')
     else:

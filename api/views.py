@@ -1,5 +1,6 @@
-import jwt, datetime
-from jwt import ExpiredSignatureError, InvalidTokenError
+import jwt
+import datetime
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response

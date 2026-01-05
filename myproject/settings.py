@@ -16,7 +16,7 @@ ROOT_URLCONF = 'myproject.urls'
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Allow all hosts during testing, restrict later
-ALLOWED_HOSTS = ['*']  # change to ['django-iot-backend.onrender.com'] after testing
+ALLOWED_HOSTS = ['*']  # after test ["django-iot-backend.onrender.com", "pwa.flowofthings.net"]
 
 # Database configuration using Render Postgres or fallback SQLite
 DATABASES = {

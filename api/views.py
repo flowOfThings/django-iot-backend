@@ -6,15 +6,8 @@ from rest_framework.response import Response
 from .models import SensorData
 from .serializers import SensorDataSerializer
 
-# Shared secret must match the ESP code
-ESP_SECRET_KEY = "b218f377b1960218c6ef9463bd29d926"
-
 def verify_jwt(token):
-    """
-    Decode and verify JWT from ESP node.
-    Returns payload dict if valid, else raises.
-    """
-    return jwt.decode(token, ESP_SECRET_KEY, algorithms=["HS256"])
+    return jwt.decode(token, settings.ESP_SECRET_KEY, algorithms=["HS256"])
 
 @api_view(['POST'])
 def ingest(request):

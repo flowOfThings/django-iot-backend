@@ -6,7 +6,7 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ✅ SECRET_KEY from environment variable
-SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret-key')
+ESP_SECRET_KEY = os.getenv("ESP_SECRET_KEY")
 
 # ✅ Root URL configuration
 ROOT_URLCONF = 'myproject.urls'

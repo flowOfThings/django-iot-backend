@@ -4,54 +4,12 @@ from django.conf import settings
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import SensorData
-from .serializers import SensorDataSerializer
 
-# --- Helpers ---
-def verify_device_jwt(token):
-    """Verify JWT from ESP device using ESP secret."""
-    return jwt.decode(token, settings.ESP_SECRET_KEY, algorithms=["HS256"])
-
-def verify_frontend_jwt(token):
-    """Verify JWT from frontend user using frontend secret."""
-    return jwt.decode(token, settings.FRONTEND_SECRET_KEY, algorithms=["HS256"])
-
-# --- Device ingest ---
-@api_view(['POST'])
-def ingest(request):
-    token = request.data.get("token")
-    if not token:
-        return Response({"error": "Missing token"}, status=400)
-
-    try:
-        payload = verify_device_jwt(token)
-    except ExpiredSignatureError:
-        return Response({"error": "Token expired"}, status=401)
-    except InvalidTokenError:
-        return Response({"error": "Invalid token"}, status=401)
-
-    # Extract fields from payload
-    device_id = payload.get("device_id")
-    temperature = payload.get("temperature")
-    humidity = payload.get("humidity")
-    timestamp = payload.get("timestamp")
-
-    # Save to DB
-    SensorData.objects.create(
-        device_id=device_id,
-        temperature=temperature,
-        humidity=humidity,
-        timestamp=timestamp
-    )
-
-    return Response({"status": "stored"})
-
-# --- Frontend login ---
 @api_view(['POST'])
 def login(request):
     username = request.data.get("username")
     password = request.data.get("password")
 
-    # Demo credentials only
     if username != "demo" or password != "demo":
         return Response({"error": "Invalid credentials"}, status=401)
 
@@ -60,34 +18,49 @@ def login(request):
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)
     }
 
-    # Use FRONTEND_SECRET_KEY from settings, fallback if missing
     secret = settings.FRONTEND_SECRET_KEY or "fallbacksecret123"
-
     token = jwt.encode(payload, secret, algorithm="HS256")
 
     return Response({"token": token})
 
-# --- Frontend data access ---
+
 @api_view(['GET'])
 def list_data(request):
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        return Response({"error": "Missing or invalid Authorization header"}, status=401)
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    secret = settings.FRONTEND_SECRET_KEY or "fallbacksecret123"
 
-    token = auth_header.split(" ")[1]
     try:
-        verify_frontend_jwt(token)
-    except ExpiredSignatureError:
-        return Response({"error": "Token expired"}, status=401)
-    except InvalidTokenError:
-        return Response({"error": "Invalid token"}, status=401)
+        decoded = jwt.decode(token, secret, algorithms=["HS256"])
+    except (ExpiredSignatureError, InvalidTokenError):
+        return Response({"error": "Invalid or expired token"}, status=401)
 
-    # Optional filter by device_id
     device_id = request.query_params.get("device_id")
     if device_id:
-        data = SensorData.objects.filter(device_id=device_id).order_by('-timestamp')
+        data = SensorData.objects.filter(device_id=device_id).order_by("-timestamp")[:50]
     else:
-        data = SensorData.objects.all().order_by('-timestamp')
+        data = SensorData.objects.all().order_by("-timestamp")[:50]
 
-    serializer = SensorDataSerializer(data, many=True)
-    return Response(serializer.data)
+    return Response([{
+        "device_id": d.device_id,
+        "value": d.value,
+        "timestamp": d.timestamp
+    } for d in data])
+
+
+@api_view(['POST'])
+def ingest(request):
+    token = request.data.get("token")
+    secret = settings.ESP_SECRET_KEY or "espfallback123"
+
+    try:
+        decoded = jwt.decode(token, secret, algorithms=["HS256"])
+    except (ExpiredSignatureError, InvalidTokenError):
+        return Response({"error": "Invalid or expired token"}, status=401)
+
+    SensorData.objects.create(
+        device_id=decoded["device_id"],
+        value=decoded["value"],
+        timestamp=datetime.datetime.utcnow()
+    )
+
+    return Response({"status": "stored"})

@@ -1,9 +1,10 @@
-result = []
-for d in qs:
-    result.append({
-        "device_id": d.device_id,
-        "temperature": getattr(d, "temperature", None),
-        "humidity": getattr(d, "humidity", None),
-        "timestamp": d.timestamp.isoformat() if d.timestamp else None,
-    })
-return Response(result)
+from django.db import models
+
+class SensorData(models.Model):
+    device_id = models.CharField(max_length=50)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    temperature = models.FloatField()
+    humidity = models.FloatField()
+
+    def __str__(self):
+        return f"{self.device_id} @ {self.timestamp}"

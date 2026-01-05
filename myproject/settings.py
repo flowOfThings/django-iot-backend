@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 
 # Middleware (required for admin, sessions, auth, messages)
 MIDDLEWARE = [
+    "api.middleware.ExceptionLoggingMiddleware",   # temporary debug, first
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',   # required

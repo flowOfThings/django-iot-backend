@@ -8,22 +8,25 @@ from .models import SensorData
 
 @api_view(['POST'])
 def login(request):
-    username = request.data.get("username")
-    password = request.data.get("password")
+    try:
+        username = request.data.get("username")
+        password = request.data.get("password")
 
-    if username != "demo" or password != "demo":
-        return Response({"error": "Invalid credentials"}, status=401)
+        if username != "demo" or password != "demo":
+            return Response({"error": "Invalid credentials"}, status=401)
 
-    payload = {
-        "user": username,
-        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
-    }
+        payload = {
+            "user": username,
+            "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+        }
 
-    secret = settings.FRONTEND_SECRET_KEY or "fallbacksecret123"
-    token = jwt.encode(payload, secret, algorithm="HS256")
+        secret = settings.FRONTEND_SECRET_KEY or "fallbacksecret123"
+        token = jwt.encode(payload, secret, algorithm="HS256")
 
-    return Response({"token": token})
+        return Response({"token": token})
 
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
 @api_view(['GET'])
 def list_data(request):

@@ -88,7 +88,7 @@ def list_data(request):
 
         # --- ⭐ ADD CACHE HEADERS HERE ⭐ ---
         response = Response(result)
-        response["Cache-Control"] = "public, max-age=3600"
+        response["Cache-Control"] = "public, max-age=0, must-revalidate"
         return response
 
     except Exception:

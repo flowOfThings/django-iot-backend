@@ -77,7 +77,6 @@ def list_data(request):
         else:
             qs = SensorData.objects.all().order_by("-timestamp")[:50]
 
-        # Return temperature + humidity
         result = []
         for d in qs:
             result.append({
@@ -87,7 +86,11 @@ def list_data(request):
                 "timestamp": _serialize_timestamp(d.timestamp),
             })
 
-        return Response(result)
+        # --- ⭐ ADD CACHE HEADERS HERE ⭐ ---
+        response = Response(result)
+        response["Cache-Control"] = "public, max-age=3600"
+        return response
+
     except Exception:
         logger.exception("list_data error")
         return Response({"error": "Internal server error"}, status=500)
